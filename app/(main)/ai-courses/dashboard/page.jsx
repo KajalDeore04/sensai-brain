@@ -209,7 +209,7 @@ const Dashboard =  () => {
             ))}
           </div>
         ) : (
-          <div className="text-center py-16 bg-slate-50 rounded-xl border border-dashed border-slate-300 transition-all duration-500 hover:border-slate-400 animate-in fade-in-50">
+          <div className="text-center py-16 bg-slate-800 text-black rounded-xl border border-dashed border-slate-300 transition-all duration-500 hover:border-slate-400 animate-in fade-in-50">
             <div className="max-w-md mx-auto">
               <h3 className="text-xl font-medium mb-2 animate-in slide-in-from-bottom duration-300" style={{ animationDelay: "200ms" }}>No courses yet</h3>
               <p className="text-slate-500 mb-6 animate-in slide-in-from-bottom duration-300" style={{ animationDelay: "300ms" }}>Create your first course to get started</p>
