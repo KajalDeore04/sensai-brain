@@ -1,0 +1,167 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"  
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String           @id @default(uuid())
+  clerkUserId     String           @unique
+  email           String           @unique
+  name            String?
+  imageUrl        String?
+  industry        String?
+  industryInsight IndustryInsight? @relation(fields: [industry], references: [industry])
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  bio             String?
+  experience      Int?
+
+  // Existing relations
+  skills      String[]
+  assessments Assessment[]
+  resume      Resume?
+  coverLetter CoverLetter[]
+
+  // New course relations (added inverse relations)
+  createdCourses Course[]               @relation("UserCreatedCourses")
+  enrollments    UserCourseEnrollment[]
+}
+
+model Course {
+  id           String   @id @default(cuid()) // Remove any courseId references
+  name         String
+  category     String
+  level        String
+  includeVideo Boolean  @default(true)
+  courseOutput Json
+  publish      Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  createdBy   String
+  user        User                   @relation("UserCreatedCourses", fields: [createdBy], references: [id])
+  chapters    Chapter[]
+  enrollments UserCourseEnrollment[]
+
+  // Remove all courseId fields
+  @@index([createdBy])
+}
+
+model Chapter {
+  id        String  @id @default(cuid())
+  chapterId Int
+  content   Json
+  videoId   String?
+
+  // Relation with inverse
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id])
+   @@index([courseId])
+  @@unique([courseId, chapterId])
+}
+
+model UserCourseEnrollment {
+  id          String    @id @default(cuid())
+  userId      String
+  courseId    String
+  progress    Float     @default(0.0)
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+
+  // Relations with inverses
+  user   User   @relation(fields: [userId], references: [id])
+  course Course @relation(fields: [courseId], references: [id])
+
+  @@unique([userId, courseId])
+  @@index([userId])
+  @@index([courseId])
+}
+
+// ... keep your existing IndustryInsight, Assessment, Resume, CoverLetter models ...
+
+model Assessment {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  quizScore      Float // Overall quiz score
+  questions      Json[] // Array of {question, answer, userAnswer, isCorrect}
+  category       String // "Technical", "Behavioral", etc.
+  improvementTip String? // AI-generated improvement tip
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Resume {
+  id        String   @id @default(cuid())
+  userId    String   @unique // One resume per user
+  user      User     @relation(fields: [userId], references: [id])
+  content   String   @db.Text // Markdown content
+  atsScore  Float?
+  feedback  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CoverLetter {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  content        String // Markdown content
+  jobDescription String?
+  companyName    String // Name of the company applying to
+  jobTitle       String // Position applying for
+  status         String   @default("draft") // draft, completed
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([userId])
+}
+
+// Combined Industry Trends and Salary Insights
+model IndustryInsight {
+  id       String @id @default(cuid())
+  industry String @unique // The industry this data belongs to (e.g., "tech-software-development")
+
+  // Users in this industry
+  users User[]
+
+  // Salary data
+  salaryRanges Json[] // Array of { role: string, min: float, max: float, median: float, location: string? }
+
+  // Industry trends
+  growthRate  Float // Industry growth rate
+  demandLevel DemandLevel // "High", "Medium", "Low"
+  topSkills   String[] // Most in-demand skills
+
+  // Market conditions
+  marketOutlook MarketOutlook // "Positive", "Neutral", "Negative"
+  keyTrends     String[] // Array of current industry trends
+
+  // Learning suggestions
+  recommendedSkills String[] // Skills recommended for the industry
+
+  lastUpdated DateTime @default(now())
+  nextUpdate  DateTime // Scheduled update time
+
+  @@index([industry])
+}
+
+enum DemandLevel {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum MarketOutlook {
+  POSITIVE
+  NEUTRAL
+  NEGATIVE
+}
