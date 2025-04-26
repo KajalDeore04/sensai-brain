@@ -6,15 +6,17 @@ import OnboardingForm from "./_components/onboarding-form";
 
 const OnBoardingPage = async () => {
   // Redirect to onboarding if not
-  const { isOnboarded } = await getUserOnboardingStatus();
+  const { isOnboarded, userData } = await getUserOnboardingStatus();
 
-  if (isOnboarded) {
-    redirect("/dashboard");
-  }
 
+  // Remove the automatic redirect - let users access the form anytime
   return (
     <main>
-      <OnboardingForm industries={industries} />
+      <OnboardingForm 
+        industries={industries} 
+        initialValues={userData} 
+        isReturningUser={isOnboarded}
+      />
     </main>
   );
 };

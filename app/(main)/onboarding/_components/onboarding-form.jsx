@@ -30,14 +30,20 @@ import useFetch from "@/hooks/use-fetch";
 import { onboardingSchema } from "@/app/lib/schema";
 import { updateUser } from "@/actions/user";
 
-const OnboardingForm = ({ industries }) => {
+const OnboardingForm = ({ industries, initialValues = {}, isReturningUser = false }) => {
   const [selectedIndustry, setSelectedIndustry] = useState(null);
   const router = useRouter();
 
-    const {loading: updateLoading,
-        fn : updateUserFn,
-        data: updateResult,
-    } = useFetch(updateUser)
+  const {
+    loading: updateLoading,
+    fn: updateUserFn,
+    data: updateResult,
+  } = useFetch(updateUser);
+
+  // Parse initial industry and sub-industry if they exist
+  const [initialIndustry, initialSubIndustry] = initialValues.industry 
+    ? initialValues.industry.split('-') 
+    : [null, null];
 
   const {
     register,
@@ -45,46 +51,71 @@ const OnboardingForm = ({ industries }) => {
     formState: { errors },
     setValue,
     watch,
+    reset,
   } = useForm({
     resolver: zodResolver(onboardingSchema),
+    defaultValues: {
+      industry: initialIndustry || "",
+      subIndustry: initialSubIndustry || "",
+      experience: initialValues.experience ? Number(initialValues.experience) : 0,
+
+      skills: initialValues.skills?.join(", ") || "",
+      bio: initialValues.bio || "",
+    },
   });
 
   const onSubmit = async (values) => {
     try {
-        const formattedIndustry = `${values.industry}-${values.subIndustry
-            .toLowerCase()
-            .replace(/ /g, "-")}`;
-
-        await updateUserFn({
-            ...values,
-            industry: formattedIndustry,
-        })
+      const formattedIndustry = `${values.industry}-${values.subIndustry
+        .toLowerCase()
+        .replace(/ /g, "-")}`;
+  
+      await updateUserFn({
+        ...values,
+        industry: formattedIndustry,
+        // No need to split skills here - Zod already transformed it to an array
+        skills: values.skills, // This is already an array
+      });
     } catch (error) {
-        console.log("Onboarding error", error);
-        
-    } 
-  }
+      toast.error(error.message || "Failed to update profile");
+    }
+  };
 
   useEffect(() => {
-    if(updateResult?.success && !updateLoading){
-        toast.success("Profile updated successfully");
-        router.push("/dashboard");
-        router.refresh();
+    if (updateResult?.success && !updateLoading) {
+      toast.success(
+        isReturningUser 
+          ? "Profile updated successfully!" 
+          : "Onboarding completed!"
+      );
+      router.push("/dashboard");
+      router.refresh();
     }
   }, [updateResult, updateLoading]);
 
   const watchIndustry = watch("industry");
 
+  // Set initial industry selection when component mounts
+  useEffect(() => {
+    if (initialIndustry && industries.length > 0) {
+      const industryObj = industries.find(ind => ind.id === initialIndustry);
+      if (industryObj) {
+        setSelectedIndustry(industryObj);
+      }
+    }
+  }, [initialIndustry, industries]);
+
   return (
-    <div className="flex items-center justify-center bg-background">
-      <Card className="w-full max-w-lg mt-10 mx-2">
+    <div className="flex items-center justify-center bg-background min-h-screen py-8">
+      <Card className="w-full max-w-lg mx-4">
         <CardHeader>
-          <CardTitle className="gradient-title text-4xl">
-            Complete Your Profile
+          <CardTitle className="gradient-title text-3xl">
+            {isReturningUser ? "Update Your Profile" : "Complete Your Profile"}
           </CardTitle>
           <CardDescription>
-            Select your industry to get personalized career insights and
-            recommendations.
+            {isReturningUser
+              ? "Update your information to get the most relevant career insights."
+              : "Select your industry to get personalized career insights and recommendations."}
           </CardDescription>
         </CardHeader>
 
@@ -100,6 +131,7 @@ const OnboardingForm = ({ industries }) => {
                   );
                   setValue("subIndustry", "");
                 }}
+                defaultValue={initialIndustry}
               >
                 <SelectTrigger id="industry">
                   <SelectValue placeholder="Select an industry" />
@@ -127,6 +159,7 @@ const OnboardingForm = ({ industries }) => {
                 <Label htmlFor="subIndustry">Specialization</Label>
                 <Select
                   onValueChange={(value) => setValue("subIndustry", value)}
+                  defaultValue={initialSubIndustry?.replace(/-/g, " ")}
                 >
                   <SelectTrigger id="subIndustry">
                     <SelectValue placeholder="Select your specialization" />
@@ -153,13 +186,15 @@ const OnboardingForm = ({ industries }) => {
             <div className="space-y-2">
               <Label htmlFor="experience">Years of Experience</Label>
               <Input
-                id="experience"
-                type="number"
-                min="0"
-                max="50"
-                placeholder="Enter years of experience"
-                {...register("experience")}
-              />
+  id="experience"
+  type="number"
+  min="0"
+  max="50"
+  placeholder="Enter years of experience"
+  {...register("experience", { 
+    setValueAs: (v) => v === "" ? "" : Number(v).toString() // Convert to string
+  })}
+/>
               {errors.experience && (
                 <p className="text-sm text-red-500">
                   {errors.experience.message}
@@ -170,10 +205,12 @@ const OnboardingForm = ({ industries }) => {
             <div className="space-y-2">
               <Label htmlFor="skills">Skills</Label>
               <Input
-                id="skills"
-                placeholder="e.g., Python, JavaScript, Project Management"
-                {...register("skills")}
-              />
+  id="skills"
+  placeholder="e.g., Python, JavaScript, Project Management"
+  {...register("skills", {
+    setValueAs: (v) => v || "" // Ensure it's always a string
+  })}
+/>
               <p className="text-sm text-muted-foreground">
                 Separate multiple skills with commas
               </p>
@@ -195,16 +232,30 @@ const OnboardingForm = ({ industries }) => {
               )}
             </div>
 
-            <Button type="submit" className="w-full" disabled={updateLoading}>
-              {updateLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                "Complete Profile"
-              )}
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                type="button" 
+                variant="outline" 
+                className="w-full"
+                onClick={() => router.push(isReturningUser ? "/dashboard" : "/")}
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={updateLoading}
+              >
+                {updateLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  isReturningUser ? "Update Profile" : "Complete Profile"
+                )}
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>
