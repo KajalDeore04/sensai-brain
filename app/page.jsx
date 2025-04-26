@@ -2,14 +2,21 @@ import React from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import interview_prep from "@/public/interview_prep.png";
+import courses from "@/public/courses.png";
 import {
   ArrowRight,
   Trophy,
   Target,
   Sparkles,
   CheckCircle2,
+  Compass,
+  BookOpen,
+  PlusCircle,
+  GraduationCap,
+  LayoutDashboard,
+  FileText,
 } from "lucide-react";
-import HeroSection from "@/components/hero";
 import {
   Accordion,
   AccordionContent,
@@ -27,11 +34,146 @@ export default function LandingPage() {
     <>
       <div className="grid-background"></div>
 
-      {/* Hero Section */}
-      <HeroSection />
+      {/* Modern Hero Section - Replacing the image with something unique */}
+      <section className="pt-20 pb-12 md:pt-28 md:pb-16">
+        <div className="container mx-auto px-4 md:px-6">
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
+            <div className="flex-1 space-y-6 text-center lg:text-left">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+                Accelerate Your{" "}
+                <span className="text-primary">Career Growth</span> with AI
+              </h1>
+              <p className="text-lg text-muted-foreground max-w-xl mx-auto lg:mx-0">
+                All-in-one platform for resume building, interview preparation,
+                and professional development courses.
+              </p>
+              <div className="flex flex-wrap justify-center lg:justify-start gap-4">
+                <Link href="/dashboard">
+                  <Button size="lg" className="h-12">
+                    Get Started <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+                <Link href="#Quick Access Dashboard">
+                  <Button size="lg" variant="outline" className="h-12">
+                    Explore Features
+                  </Button>
+                </Link>
+              </div>
+            </div>
+
+            {/* Interactive 3D-like dashboard cards preview instead of static image */}
+            <div className="flex-1 relative">
+              <div className="relative h-96 w-full">
+                <div className="absolute top-0 right-0 bg-primary/10 backdrop-blur-sm rounded-lg p-6 shadow-lg transform rotate-3 hover:rotate-0 transition-transform duration-300">
+                  <div className="flex items-center gap-3 mb-4">
+                    <FileText className="h-6 w-6 text-primary" />
+                    <h3 className="font-semibold">Resume Builder</h3>
+                  </div>
+                  <div className="h-32 w-64 bg-background/70 rounded-md">
+                  
+                  </div>
+                </div>
+                <div className="absolute top-12 left-12 bg-primary/10 backdrop-blur-sm rounded-lg p-6 shadow-lg transform -rotate-6 hover:rotate-0 transition-transform duration-300">
+                  <div className="flex items-center gap-3 mb-4">
+                    <GraduationCap className="h-6 w-6 text-primary" />
+                    <h3 className="font-semibold">Interview Prep</h3>
+                  </div>
+                  <div className="h-32 w-64 bg-background/70 rounded-md">
+                    <Image
+                      src={interview_prep}
+                      alt="Interview Preparation"
+                      className="h-full w-full object-cover rounded-md"
+                    />
+                  </div>
+                </div>
+                <div className="absolute bottom-0 right-24 bg-primary/10 backdrop-blur-sm rounded-lg p-6 shadow-lg transform rotate-6 hover:rotate-0 transition-transform duration-300">
+                  <div className="flex items-center gap-3 mb-4">
+                    <BookOpen className="h-6 w-6 text-primary" />
+                    <h3 className="font-semibold">Courses</h3>
+                  </div>
+                  <div className="h-32 w-64 bg-background/70 rounded-md">
+                  <Image
+                      src={courses}
+                      alt="Resume Builder"
+                      
+                      className="h-full w-full object-cover rounded-md"
+                    />
+                    </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Quick Access Dashboard Section */}
+      <section className="w-full py-12 bg-primary/5 backdrop-blur-sm">
+        <div className="container mx-auto px-4 md:px-6">
+          <h2 className="text-2xl font-bold text-center mb-8">
+            Quick Access Dashboard
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+            <Link href="/dashboard">
+              <Card className="border-2 hover:border-primary transition-colors duration-300 h-full cursor-pointer">
+                <CardContent className="pt-6 text-center flex flex-col items-center h-full">
+                  <div className="flex flex-col items-center justify-center py-4">
+                    <LayoutDashboard className="h-10 w-10 mb-4 text-primary" />
+                    <h3 className="text-lg font-bold mb-2">Career Dashboard</h3>
+                    <p className="text-muted-foreground">
+                      Monitor your career progress and insights
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+
+            <Link href="/courses">
+              <Card className="border-2 hover:border-primary transition-colors duration-300 h-full cursor-pointer">
+                <CardContent className="pt-6 text-center flex flex-col items-center h-full">
+                  <div className="flex flex-col items-center justify-center py-4">
+                    <BookOpen className="h-10 w-10 mb-4 text-primary" />
+                    <h3 className="text-lg font-bold mb-2">Learning Courses</h3>
+                    <p className="text-muted-foreground">
+                      Access professional development courses
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+
+            <Link href="/courses/create">
+              <Card className="border-2 hover:border-primary transition-colors duration-300 h-full cursor-pointer">
+                <CardContent className="pt-6 text-center flex flex-col items-center h-full">
+                  <div className="flex flex-col items-center justify-center py-4">
+                    <PlusCircle className="h-10 w-10 mb-4 text-primary" />
+                    <h3 className="text-lg font-bold mb-2">Create Course</h3>
+                    <p className="text-muted-foreground">
+                      Design and publish your own courses
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+
+            <Link href="/courses/explore">
+              <Card className="border-2 hover:border-primary transition-colors duration-300 h-full cursor-pointer">
+                <CardContent className="pt-6 text-center flex flex-col items-center h-full">
+                  <div className="flex flex-col items-center justify-center py-4">
+                    <Compass className="h-10 w-10 mb-4 text-primary" />
+                    <h3 className="text-lg font-bold mb-2">Explore Courses</h3>
+                    <p className="text-muted-foreground">
+                      Discover new skills and career paths
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          </div>
+        </div>
+      </section>
 
       {/* Features Section */}
-      <section className="w-full py-12 md:py-24 lg:py-32 bg-background">
+      {/* <section id="features" className="w-full py-12 md:py-24 lg:py-32 bg-background">
         <div className="container mx-auto px-4 md:px-6">
           <h2 className="text-3xl font-bold tracking-tighter text-center mb-12">
             Powerful Features for Your Career Growth
@@ -45,7 +187,7 @@ export default function LandingPage() {
                 <CardContent className="pt-6 text-center flex flex-col items-center">
                   <div className="flex flex-col items-center justify-center">
                     {feature.icon}
-                    <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
+                    <h3 className="text-lg font-bold mb-2">{feature.title}</h3>
                     <p className="text-muted-foreground">
                       {feature.description}
                     </p>
@@ -55,7 +197,7 @@ export default function LandingPage() {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Stats Section */}
       <section className="w-full py-12 md:py-24 bg-muted/50">
@@ -100,7 +242,7 @@ export default function LandingPage() {
                 <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
                   {item.icon}
                 </div>
-                <h3 className="font-semibold text-xl">{item.title}</h3>
+                <h3 className="font-semibold text-lg">{item.title}</h3>
                 <p className="text-muted-foreground">{item.description}</p>
               </div>
             ))}
@@ -108,6 +250,7 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Testimonials Section */}
       <section className="w-full py-12 md:py-24 bg-muted/50">
         <div className="container mx-auto px-4 md:px-6">
           <h2 className="text-3xl font-bold text-center mb-12">
@@ -191,15 +334,15 @@ export default function LandingPage() {
             <h2 className="text-3xl font-bold tracking-tighter text-primary-foreground sm:text-4xl md:text-5xl">
               Ready to Accelerate Your Career?
             </h2>
-            <p className="mx-auto max-w-[600px] text-primary-foreground/80 md:text-xl">
+            <p className="mx-auto max-w-[600px] text-primary-foreground/80 md:text-lg">
               Join thousands of professionals who are advancing their careers
-              with AI-powered guidance.
+              with AI-powered guidance and courses.
             </p>
             <Link href="/dashboard" passHref>
               <Button
                 size="lg"
                 variant="secondary"
-                className="h-11 mt-5 animate-bounce"
+                className="h-11 mt-5 animate-pulse"
               >
                 Start Your Journey Today <ArrowRight className="ml-2 h-4 w-4" />
               </Button>

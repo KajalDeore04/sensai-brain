@@ -9,7 +9,7 @@ const CreateCourseLayout = ({ children }) => {
     <div className="min-h-screen ">
       <UserInputContext.Provider value={{userCourseInput, setUserCourseInput}}>
         <>
-          <Header />
+          {/* <Header /> */}
           <div className="animate-in fade-in duration-300">
             {children}
           </div>
