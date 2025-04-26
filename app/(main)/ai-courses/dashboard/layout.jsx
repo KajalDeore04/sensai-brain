@@ -31,8 +31,8 @@ const DashboardLayout = ({ children }) => {
 
   return (
     <UserCourseListContext.Provider value={{ userCourseList, setUserCourseList }}>
-      <div className="min-h-screen ">
-        <div className="grid-background"></div>
+      <div className="min-h-screen bg-background/80 ">
+        
         {/* <Header /> */}
         <div className="container mx-auto px-4 md:px-6 py-6 ">{children}</div>
       </div>

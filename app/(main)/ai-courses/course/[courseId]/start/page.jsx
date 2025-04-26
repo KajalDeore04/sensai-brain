@@ -24,8 +24,11 @@ const opts = {
 };
 
 const ChapterListCard = ({ chapter, index, isActive, onClick }) => {
-  // Extract the chapter name properly - either use the full name or format it correctly
-  const chapterName = chapter?.content?.chapter || `Chapter ${chapter.chapterId}`;
+  // Extract the chapter name and trim the "Chapter X:" prefix if present
+  let chapterName = chapter?.content?.chapter || `Chapter ${chapter.chapterId}`;
+  
+  // Remove "Chapter X:" prefix if it exists
+  chapterName = chapterName.replace(/^Chapter\s+\d+\s*:\s*/i, '');
   
   return (
     <motion.div
@@ -43,13 +46,12 @@ const ChapterListCard = ({ chapter, index, isActive, onClick }) => {
             {chapter.chapterId}
           </div>
         </div>
-        <div className="flex-1">
-          <h2 className={`font-medium ${isActive ? "text-white" : "text-gray-300"}`}>
+        <div className="flex-1 overflow-hidden">
+          <h2 className={`font-medium text-sm  ${isActive ? "text-white" : "text-gray-300"}`}>
             {chapterName}
           </h2>
           <p className="flex items-center gap-2 text-sm text-gray-500">
-            {/* <Clock className="h-4 w-4" />
-            {courseData.courseOutput?.chapters?.duration || "Not specified"} */}
+            {/* Duration info here if needed */}
           </p>
         </div>
       </div>
@@ -58,8 +60,9 @@ const ChapterListCard = ({ chapter, index, isActive, onClick }) => {
 };
 
 const ChapterContent = ({ chapter, content }) => {
-  // Extract the chapter name properly for display
-  const chapterName = content?.chapter || `Chapter ${chapter.chapterId}`;
+  // Extract the chapter name and trim the "Chapter X:" prefix
+  let chapterName = content?.chapter || `Chapter ${chapter.chapterId}`;
+  chapterName = chapterName.replace(/^Chapter\s+\d+\s*:\s*/i, '');
   
   return (
     <motion.div 
@@ -120,6 +123,16 @@ const CourseStart = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
+    // Make the course page take up the full screen by adding styles
+    document.body.style.overflow = 'hidden';
+    
+    // Clean up when component unmounts
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, []);
+
+  useEffect(() => {
     if (params?.courseId) {
       getCourse();
     }
@@ -156,7 +169,7 @@ const CourseStart = () => {
                                 courseData.courseOutput?.chapters?.[index]?.title || 
                                 `Chapter ${chapter.chapterId}`;
             
-            chapter.content.chapterName = `Chapter ${chapter.chapterId}: ${chapterTitle}`;
+            chapter.content.chapterName = chapterTitle;
           }
           
           // Ensure duration is set
@@ -198,7 +211,7 @@ const CourseStart = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="min-h-screen fixed inset-0 z-50 bg-black flex items-center justify-center">
         <motion.div 
           animate={{ opacity: [0.4, 1, 0.4] }}
           transition={{ repeat: Infinity, duration: 1.5 }}
@@ -212,34 +225,34 @@ const CourseStart = () => {
 
   if (!course) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="min-h-screen fixed inset-0 z-50 bg-black flex items-center justify-center">
         <div className="text-white text-xl">Course not found</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      {/* Top Navigation */}
+    <div className="fixed inset-0 z-50 bg-black text-white flex flex-col">
+      {/* Top Navigation - Fixed */}
       <motion.div 
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5 }}
-        className="bg-black border-b border-gray-800 sticky top-0 z-50 h-16 flex items-center px-4"
+        className="bg-black border-b border-gray-800 h-16 flex items-center px-4 z-20"
       >
         <div className="container mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button 
-              onClick={() => router.push('/dashboard')}
+              onClick={() => router.push('/ai-courses/dashboard')}
               variant="ghost" 
               className="text-gray-400 hover:text-white hover:bg-blue-900/30"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Dashboard
+              Back to Course Dashboard
             </Button>
           </div>
           
-          <h1 className="font-medium text-lg text-white hidden md:block">
+          <h1 className="font-medium text-lg text-white hidden md:block truncate max-w-md">
             {course?.courseOutput?.courseName || course?.name || course?.level || "Course"}
           </h1>
           
@@ -253,7 +266,8 @@ const CourseStart = () => {
         </div>
       </motion.div>
 
-      <div className="flex relative">
+      {/* Main Content Area with Fixed Header */}
+      <div className="flex flex-1 overflow-hidden">
         {/* Sidebar for chapter navigation - Desktop */}
         <motion.div
           initial={{ opacity: 0 }}
@@ -262,14 +276,14 @@ const CourseStart = () => {
             width: sidebarCollapsed ? "0px" : "256px" 
           }}
           transition={{ duration: 0.3 }}
-          className={`${sidebarCollapsed ? 'w-0' : 'w-64'} hidden md:block h-[calc(100vh-4rem)] border-r border-gray-800 overflow-hidden fixed z-40 bg-black transition-all duration-300`}
+          className={`${sidebarCollapsed ? 'w-0' : 'w-64'} hidden md:flex flex-col h-full border-r border-gray-800 overflow-hidden fixed left-0 bottom-0 top-16 z-10 bg-black transition-all duration-300`}
         >
           <div className="bg-gray-900 sticky top-0 z-10 p-4 border-b border-gray-800 flex items-center">
             <BookOpen className="h-5 w-5 mr-2 text-blue-400" />
             <h2 className="font-medium">Chapters</h2>
           </div>
 
-          <div className={`${sidebarCollapsed ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}>
+          <div className={`${sidebarCollapsed ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300 overflow-y-auto flex-1`}>
             {course?.chapters?.map((chapter, index) => (
               <ChapterListCard
                 key={chapter.id || index}
@@ -285,7 +299,7 @@ const CourseStart = () => {
             variant="outline"
             size="icon"
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="absolute top-1/2 -right-3 rounded-full bg-gray-900 border-gray-700 text-gray-300 hover:bg-blue-900/50 hover:text-white transition-all duration-300 z-50"
+            className="absolute top-1/2 -right-3 rounded-full bg-gray-900 border-gray-700 text-gray-300 hover:bg-blue-900/50 hover:text-white transition-all duration-300 z-20"
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
@@ -297,7 +311,7 @@ const CourseStart = () => {
             variant="outline"
             size="icon"
             onClick={() => setSidebarCollapsed(false)}
-            className="hidden md:flex fixed left-0 top-1/2 transform -translate-y-1/2 z-50 rounded-full bg-gray-900 border-gray-700 text-gray-300 hover:bg-blue-900/50 hover:text-white transition-all duration-300"
+            className="hidden md:flex fixed left-0 top-1/2 transform -translate-y-1/2 z-20 rounded-full bg-gray-900 border-gray-700 text-gray-300 hover:bg-blue-900/50 hover:text-white transition-all duration-300"
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
@@ -309,7 +323,7 @@ const CourseStart = () => {
             initial={{ x: -300 }}
             animate={{ x: 0 }}
             exit={{ x: -300 }}
-            className="fixed top-16 left-0 z-40 w-64 h-[calc(100vh-4rem)] bg-black border-r border-gray-800 md:hidden overflow-y-auto"
+            className="fixed top-16 left-0 z-30 w-64 h-[calc(100vh-4rem)] bg-black border-r border-gray-800 md:hidden overflow-y-auto"
           >
             <div className="bg-gray-900 p-4 border-b border-gray-800 flex items-center justify-between">
               <div className="flex items-center">
@@ -341,12 +355,16 @@ const CourseStart = () => {
           </motion.div>
         )}
 
-        {/* Main Content Area */}
-        <div className={`transition-all duration-300 min-h-[calc(100vh-4rem)] w-full ${sidebarCollapsed ? 'md:ml-0' : 'md:ml-64'}`}>
+        {/* Main Content Area with scrollable content */}
+        <div 
+          className={`transition-all duration-300 overflow-y-auto flex-1 ${
+            sidebarCollapsed ? 'md:ml-0' : 'md:ml-64'
+          }`}
+        >
           {selectedChapter && chapterContent ? (
             <ChapterContent chapter={selectedChapter} content={chapterContent} />
           ) : (
-            <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
+            <div className="flex items-center justify-center h-full">
               <div className="text-center">
                 <motion.div
                   animate={{ opacity: [0.5, 1, 0.5] }}

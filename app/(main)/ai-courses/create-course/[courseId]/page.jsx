@@ -111,7 +111,7 @@ const LoadingOverlay = ({ loading }) => {
             </div>
           </div>
           
-          <div className="mt-6 space-y-4">
+          {/* <div className="mt-6 space-y-4">
             <div className="space-y-2">
               <div className="flex justify-between text-xs">
                 <span>Creating chapter content</span>
@@ -130,7 +130,7 @@ const LoadingOverlay = ({ loading }) => {
                 />
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
       </motion.div>
     </div>
@@ -328,7 +328,7 @@ const ChapterEditor = () => {
   }
 
   return (
-    <div className="bg-gray-50 dark:bg-black min-h-screen pb-20">
+    <div className="  min-h-screen pb-20">
       <LoadingOverlay loading={loading} />
       
       <Notification 

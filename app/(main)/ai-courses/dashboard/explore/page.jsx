@@ -146,7 +146,7 @@ const Explore = () => {
   const showPagination = !searchTerm && courseList.length > coursesPerPage;
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 text-white min-h-screen">
+    <div className="p-4 md:p-6 lg:p-8  text-white min-h-screen">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
         <div>
           <h2 className="text-6xl font-bold gradient-title">Explore Projects</h2>

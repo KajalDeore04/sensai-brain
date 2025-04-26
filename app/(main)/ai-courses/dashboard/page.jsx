@@ -162,6 +162,7 @@ const Dashboard =  () => {
                   <h2 className="font-bold text-lg mb-1 line-clamp-2 transition-all duration-300 group-hover:text-gray-100">
                     {course?.courseOutput?.courseName}
                   </h2>
+                  <p className=" text-xs text-gray-500 mb-1  transition-all duration-300 group-hover:text-gray-100">{course?.courseOutput?.description}</p>
                   <span className="inline-block text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded transition-all duration-300 group-hover:bg-slate-200">
                     {course?.courseOutput?.level}
                   </span>

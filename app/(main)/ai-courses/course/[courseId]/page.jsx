@@ -94,7 +94,7 @@ const CourseLayout = () => {
 
   if (loading || !course) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="min-h-screen  flex items-center justify-center">
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: [0.4, 1, 0.4] }}
@@ -110,22 +110,22 @@ const CourseLayout = () => {
   const courseUrl = `${process.env.NEXT_PUBLIC_HOST_NAME}ai-courses/course/${course?.id}`;
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen w-full text-white">
       {/* Top Navigation */}
       <motion.header 
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5 }}
-        className="border-b border-gray-800 sticky top-0 z-50 bg-black/90 backdrop-blur-sm"
+        className="border-b border-gray-800 sticky top-0 z-50  backdrop-blur-2xl"
       >
         <div className="container mx-auto px-8 h-16 flex items-center justify-between">
           <Button 
-            onClick={() => router.push('/dashboard')}
+            onClick={() => router.push('/ai-courses/dashboard')}
             variant="ghost" 
             className="text-gray-400 hover:text-white hover:bg-gray-900 transition-all duration-300"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Dashboard
+            Back to Course Dashboard
           </Button>
         </div>
       </motion.header>
@@ -230,16 +230,16 @@ const CourseLayout = () => {
                     className="group cursor-pointer"
                   >
                     <div className="border border-gray-800 hover:border-white rounded-lg p-4 transition-all duration-200">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full border border-gray-800 group-hover:border-pink-500 flex items-center justify-center text-lg font-medium text-gray-500 group-hover:text-white transition-all duration-200">
+                      <div className="flex items-center gap-6">
+                        <div className=" p-5  rounded-full border border-gray-800 group-hover:border-pink-500 flex items-center justify-center text-lg font-medium text-gray-500 group-hover:text-white transition-all duration-200">
                           {chapter.chapterId || index + 1}
                         </div>
                         
                         <div className="flex-grow">
-                          <h3 className="text-lg font-medium group-hover:text-blue-300 transition-colors duration-300">
+                          <h3 className="text-md font-medium group-hover:text-blue-300 transition-colors duration-300">
                             {displayName || `Chapter ${chapter.chapterId || index + 1}`}
                           </h3>
-                          <p className="text-gray-500 mt-1 line-clamp-2">
+                          <p className="text-sm text-gray-500 mt-1 line-clamp-2">
                             {chapter.content?.about || chapter.content?.description || ''}
                           </p>
                         </div>
@@ -247,7 +247,7 @@ const CourseLayout = () => {
                         <motion.div
                           whileHover={{ scale: 1.2 }}
                           transition={{ type: "spring", stiffness: 400 }}
-                          className="w-8 h-8 rounded-full bg-gray-800 group-hover:bg-white flex items-center justify-center"
+                          className="p-3 rounded-full bg-gray-800 group-hover:bg-white flex items-center justify-center"
                         >
                           <Play className="w-4 h-4 text-gray-400 group-hover:text-black transition-all duration-200" />
                         </motion.div>
