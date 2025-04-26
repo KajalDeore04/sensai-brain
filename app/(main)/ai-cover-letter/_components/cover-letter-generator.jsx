@@ -1,57 +1,59 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { generateCoverLetter } from "@/actions/cover-letter";
+import { getResume } from "@/actions/resume";
 import useFetch from "@/hooks/use-fetch";
 import { coverLetterSchema } from "@/app/lib/schema";
-import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
+import { CardDescription } from "@/components/ui/card";
 export default function CoverLetterGenerator() {
   const router = useRouter();
+  const [resumeData, setResumeData] = useState(null);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
     reset,
+    watch,
   } = useForm({
     resolver: zodResolver(coverLetterSchema),
   });
 
-  const {
-    loading: generating,
-    fn: generateLetterFn,
-    data: generatedLetter,
-  } = useFetch(generateCoverLetter);
+  const { fn: fetchResumeFn } = useFetch(getResume);
+  const { loading: generating, fn: generateLetterFn } = useFetch(generateCoverLetter);
 
-  // Update content when letter is generated
+  // Fetch resume data on component mount
   useEffect(() => {
-    if (generatedLetter) {
-      toast.success("Cover letter generated successfully!");
-      router.push(`/ai-cover-letter/${generatedLetter.id}`);
-      reset();
-    }
-  }, [generatedLetter]);
+    const loadResume = async () => {
+      try {
+        const data = await fetchResumeFn();
+        setResumeData(data?.content || null);
+      } catch (error) {
+        console.error("Failed to load resume:", error);
+      }
+    };
+    loadResume();
+  }, []);
 
   const onSubmit = async (data) => {
     try {
-      await generateLetterFn(data);
+      const result = await generateLetterFn({
+        ...data,
+        resumeContent: resumeData // Pass resume content to the action
+      });
+      router.push(`/ai-cover-letter/${result.id}`);
     } catch (error) {
       toast.error(error.message || "Failed to generate cover letter");
     }
@@ -67,11 +69,10 @@ export default function CoverLetterGenerator() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {/* Form fields remain the same */}
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="companyName">Company Name</Label>
+                <Label htmlFor="companyName">Company Name*</Label>
                 <Input
                   id="companyName"
                   placeholder="Enter company name"
@@ -85,7 +86,7 @@ export default function CoverLetterGenerator() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="jobTitle">Job Title</Label>
+                <Label htmlFor="jobTitle">Job Title*</Label>
                 <Input
                   id="jobTitle"
                   placeholder="Enter job title"
@@ -100,7 +101,7 @@ export default function CoverLetterGenerator() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="jobDescription">Job Description</Label>
+              <Label htmlFor="jobDescription">Job Description*</Label>
               <Textarea
                 id="jobDescription"
                 placeholder="Paste the job description here"
@@ -114,8 +115,29 @@ export default function CoverLetterGenerator() {
               )}
             </div>
 
-            <div className="flex justify-end">
-              <Button type="submit" disabled={generating}>
+            {resumeData && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  <Label>Resume Detected</Label>
+                </div>
+                <div className="p-4 border rounded-lg bg-muted/50 max-h-40 overflow-y-auto">
+                  <p className="text-sm text-muted-foreground">
+                    Your resume data will be used to personalize this cover letter.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => reset()}
+              >
+                Reset
+              </Button>
+              <Button type="submit" disabled={generating || !resumeData}>
                 {generating ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
