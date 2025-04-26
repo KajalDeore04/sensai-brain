@@ -10,41 +10,92 @@ const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 export async function saveResume(content) {
   const { userId } = await auth();
-  // console.log("userId", userId);
-  
   if (!userId) throw new Error("Unauthorized");
 
   const user = await db.user.findUnique({
     where: { clerkUserId: userId },
+    include: {
+      industryInsight: true,
+    },
   });
-  // console.log("User from DB:", user);
 
   if (!user) throw new Error("User not found");
 
   try {
-    // console.log("Before saving/updating resume..."); // Debugging line
+    // First generate ATS score and feedback
+    const { atsScore, feedback } = await generateATSFeedback(content, user.industry);
+
+    // Then save the resume with this information
     const resume = await db.resume.upsert({
       where: {
         userId: user.id,
       },
       update: {
         content,
+        atsScore,
+        feedback,
       },
       create: {
         userId: user.id,
         content,
+        atsScore,
+        feedback,
       },
     });
-    // console.log("Resume saved successfully:", resume); // Debugging line
 
     revalidatePath("/resume");
-    return resume;
+    return { resume, atsScore, feedback };
   } catch (error) {
     console.error("Error saving resume:", error);
     throw new Error("Failed to save resume");
   }
 }
 
+async function generateATSFeedback(resumeContent, industry) {
+  const prompt = `
+    Analyze this resume for Applicant Tracking System (ATS) compatibility and provide:
+    1. A score from 0-100 based on ATS optimization
+    2.  feedback on improvements needed in bullet points
+    3. Industry-specific suggestions for a ${industry} professional
+
+    Resume Content:
+    ${resumeContent}
+
+    Provide your response in JSON format with these keys:
+    {
+      "score": "number between 0-100",
+      "feedback": "string with  feedback in bullet points",
+      "improvementTips": "array of strings with specific suggestions"
+    }
+  `;
+
+  try {
+    const result = await model.generateContent(prompt);
+    const response = result.response;
+    const text = response.text();
+    
+    // Extract JSON from the response
+    const jsonStart = text.indexOf('{');
+    const jsonEnd = text.lastIndexOf('}') + 1;
+    const jsonString = text.slice(jsonStart, jsonEnd);
+    
+    const { score, feedback, improvementTips } = JSON.parse(jsonString);
+    
+    return {
+      atsScore: score,
+      feedback: `${feedback}\n\nKey Improvement Tips:\n${improvementTips.join('\n- ')}`
+    };
+  } catch (error) {
+    console.error("Error generating ATS feedback:", error);
+    // Return default values if AI fails
+    return {
+      atsScore: 60,
+      feedback: "Could not generate feedback. Please check your resume formatting and content."
+    };
+  }
+}
+
+// app/actions/resume.js
 export async function getResume() {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
@@ -55,11 +106,21 @@ export async function getResume() {
 
   if (!user) throw new Error("User not found");
 
-  return await db.resume.findUnique({
+  const resume = await db.resume.findUnique({
     where: {
       userId: user.id,
     },
   });
+
+  if (!resume) return null;
+
+  return {
+    content: resume.content,
+    atsScore: resume.atsScore,
+    feedback: resume.feedback,
+    createdAt: resume.createdAt,
+    updatedAt: resume.updatedAt,
+  };
 }
 
 export async function improveWithAI({ current, type }) {

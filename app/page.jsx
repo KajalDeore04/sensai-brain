@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import interview_prep from "@/public/interview_prep.png";
 import courses from "@/public/courses.png";
+import resume from "@/public/resume.png";
 import {
   ArrowRight,
   Trophy,
@@ -70,7 +71,11 @@ export default function LandingPage() {
                     <h3 className="font-semibold">Resume Builder</h3>
                   </div>
                   <div className="h-32 w-64 bg-background/70 rounded-md">
-                  
+                  <Image
+                      src={resume}
+                      alt="Resume Preparation"
+                      className="h-full w-full object-cover rounded-md"
+                    />
                   </div>
                 </div>
                 <div className="absolute top-12 left-12 bg-primary/10 backdrop-blur-sm rounded-lg p-6 shadow-lg transform -rotate-6 hover:rotate-0 transition-transform duration-300">

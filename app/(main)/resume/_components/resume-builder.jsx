@@ -4,6 +4,13 @@ import { useState, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+import {
   AlertTriangle,
   Download,
   Edit,
@@ -24,18 +31,91 @@ import { useUser } from "@clerk/nextjs";
 import { entriesToMarkdown } from "@/app/lib/helper";
 import { resumeSchema } from "@/app/lib/schema";
 import html2pdf from "html2pdf.js/dist/html2pdf.min.js";
+import { getResume } from "@/actions/resume";
 
 export default function ResumeBuilder({ initialContent }) {
   const [activeTab, setActiveTab] = useState("edit");
   const [previewContent, setPreviewContent] = useState(initialContent);
   const { user } = useUser();
   const [resumeMode, setResumeMode] = useState("preview");
+  // Add this state to your component
+const [feedback, setFeedback] = useState(null);
+const [atsScore, setAtsScore] = useState(null);
+const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+const [isLoading, setIsLoading] = useState(true); // Add loading state
 
-  const {
+
+// Add this to fetch resume data
+const {
+  data: resumeData,
+  loading: isResumeLoading,
+  error: resumeError,
+  fn: fetchResumeFn,
+} = useFetch(getResume);
+
+ // Fetch resume data when component mounts
+ useEffect(() => {
+  const fetchData = async () => {
+    try {
+      const data = await fetchResumeFn();
+      if (data?.content) {
+        setPreviewContent(data.content);
+        // Parse the markdown content to populate form fields
+        parseMarkdownToForm(data.content);
+      }
+    } catch (error) {
+      console.error("Error fetching resume:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  fetchData();
+}, []);
+  // Function to parse markdown and populate form fields
+  const parseMarkdownToForm = (markdown) => {
+    // This is a simplified parser - you may need to adjust based on your exact markdown structure
+    const contactMatch = markdown.match(/## <div align="center">(.+?)<\/div>\s+<div align="center">(.+?)<\/div>/s);
+    const summaryMatch = markdown.match(/## Professional Summary\s+(.+?)(?=##|$)/s);
+    const skillsMatch = markdown.match(/## Skills\s+(.+?)(?=##|$)/s);
+    
+    // Extract contact info
+    const contactInfo = {};
+    if (contactMatch && contactMatch[2]) {
+      const contactText = contactMatch[2];
+      const emailMatch = contactText.match(/📧 (.+?)(?=\||$)/);
+      const mobileMatch = contactText.match(/📱 (.+?)(?=\||$)/);
+      const linkedinMatch = contactText.match(/💼 \[LinkedIn\]\((.+?)\)/);
+      const twitterMatch = contactText.match(/🐦 \[Twitter\]\((.+?)\)/);
+      
+      if (emailMatch) contactInfo.email = emailMatch[1];
+      if (mobileMatch) contactInfo.mobile = mobileMatch[1];
+      if (linkedinMatch) contactInfo.linkedin = linkedinMatch[1];
+      if (twitterMatch) contactInfo.twitter = twitterMatch[1];
+    }
+
+    // Initialize form with parsed data
+    reset({
+      contactInfo,
+      summary: summaryMatch ? summaryMatch[1].trim() : "",
+      skills: skillsMatch ? skillsMatch[1].trim() : "",
+      // Note: For experience, education, projects you'll need more complex parsing
+      // or consider storing these in a more structured format in your database
+      experience: [],
+      education: [],
+      projects: [],
+    });
+  };
+
+  
+
+   // Add reset to your useForm hook
+   const {
     control,
     register,
     handleSubmit,
     watch,
+    reset, // Add reset
     formState: { errors },
   } = useForm({
     resolver: zodResolver(resumeSchema),
@@ -81,14 +161,16 @@ export default function ResumeBuilder({ initialContent }) {
     }
   }, [saveResult, saveError, isSaving]);
 
+  
+
   const getContactMarkdown = () => {
     const { contactInfo } = formValues;
     const parts = [];
-    if (contactInfo.email) parts.push(`📧 ${contactInfo.email}`);
-    if (contactInfo.mobile) parts.push(`📱 ${contactInfo.mobile}`);
+    if (contactInfo.email) parts.push(`${contactInfo.email}`);
+    if (contactInfo.mobile) parts.push(`${contactInfo.mobile}`);
     if (contactInfo.linkedin)
-      parts.push(`💼 [LinkedIn](${contactInfo.linkedin})`);
-    if (contactInfo.twitter) parts.push(`🐦 [Twitter](${contactInfo.twitter})`);
+      parts.push(`[LinkedIn](${contactInfo.linkedin})`);
+    if (contactInfo.twitter) parts.push(`[Twitter](${contactInfo.twitter})`);
 
     return parts.length > 0
       ? `## <div align="center">${user.fullName}</div>
@@ -135,23 +217,41 @@ export default function ResumeBuilder({ initialContent }) {
   const onSubmit = async (data) => {
     try {
       const formattedContent = previewContent
-        .replace(/\n/g, "\n") // Normalize newlines
-        .replace(/\n\s*\n/g, "\n\n") // Normalize multiple newlines to double newlines
+        .replace(/\n/g, "\n")
+        .replace(/\n\s*\n/g, "\n\n")
         .trim();
-
-      console.log(previewContent, formattedContent);
-      await saveResumeFn(previewContent);
+  
+      const { resume, atsScore, feedback } = await saveResumeFn(formattedContent);
+      
+      // Show feedback after successful save
+      setAtsScore(atsScore);
+      setFeedback(feedback);
+      setIsFeedbackOpen(true);
     } catch (error) {
+      // Error is already shown by useFetch via toast
       console.error("Save error:", error);
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Loading your resume...</span>
+      </div>
+    );
+  }
+
   return (
+
+    
     <div data-color-mode="light" className="space-y-4">
+      
       <div className="flex flex-col md:flex-row justify-between items-center gap-2">
         <h1 className="font-bold gradient-title text-5xl md:text-6xl">
           Resume Builder
         </h1>
+        
         <div className="space-x-2">
           <Button
             variant="destructive"
@@ -415,6 +515,86 @@ export default function ResumeBuilder({ initialContent }) {
           </div>
         </TabsContent>
       </Tabs>
+      <Dialog open={isFeedbackOpen} onOpenChange={setIsFeedbackOpen}>
+  <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+    <DialogHeader>
+      <DialogTitle className="text-2xl font-bold gradient-title">Resume Analysis</DialogTitle>
+    </DialogHeader>
+    
+    <div className="space-y-6 py-2">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 bg-muted/50 rounded-lg border">
+        <h3 className="text-lg font-medium mb-2 md:mb-0">ATS Score</h3>
+        <div className="flex items-center w-full md:w-auto">
+          <div className="relative w-24 h-24 md:w-32 md:h-32">
+            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+              <path
+                d="M18 2.0845
+                  a 15.9155 15.9155 0 0 1 0 31.831
+                  a 15.9155 15.9155 0 0 1 0 -31.831"
+                fill="none"
+                stroke="#e6e6e6"
+                strokeWidth="3"
+              />
+              <path
+                d="M18 2.0845
+                  a 15.9155 15.9155 0 0 1 0 31.831
+                  a 15.9155 15.9155 0 0 1 0 -31.831"
+                fill="none"
+                stroke={atsScore >= 70 ? "#10B981" : atsScore >= 40 ? "#F59E0B" : "#EF4444"}
+                strokeWidth="3"
+                strokeDasharray={`${atsScore}, 100`}
+                strokeLinecap="round"
+              />
+            </svg>
+            <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center">
+              <span className="text-2xl font-bold">{atsScore}</span>
+            </div>
+          </div>
+          <div className="ml-4">
+            <p className={`text-sm font-medium ${
+              atsScore >= 70 ? "text-green-500" : 
+              atsScore >= 40 ? "text-amber-500" : 
+              "text-red-500"
+            }`}>
+              {atsScore >= 70 ? "Excellent" : atsScore >= 40 ? "Good" : "Needs Improvement"}
+            </p>
+            <p className="text-sm text-muted-foreground mt-1">
+              {atsScore >= 70 ? "Your resume is well optimized for ATS systems." : 
+               atsScore >= 40 ? "Your resume could use some improvements for better ATS compatibility." : 
+               "Your resume needs significant improvement to pass ATS screening."}
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <div className="space-y-2">
+        <h3 className="text-lg font-medium flex items-center">
+          <AlertTriangle className={`h-5 w-5 mr-2 ${
+            atsScore >= 70 ? "text-green-500" : 
+            atsScore >= 40 ? "text-amber-500" : 
+            "text-red-500"
+          }`} />
+          Improvement Suggestions
+        </h3>
+        <div className="prose prose-sm max-w-none p-4 bg-muted/50 rounded-lg border">
+          <MDEditor.Markdown source={feedback} />
+        </div>
+      </div>
+      
+      <div className="flex justify-end pt-2">
+        <Button variant="outline" className="mr-2">
+          <Download className="h-4 w-4 mr-2" />
+          Save Feedback
+        </Button>
+        <Button onClick={() => setIsFeedbackOpen(false)}>
+          Close
+        </Button>
+      </div>
     </div>
+  </DialogContent>
+</Dialog>
+    </div>
+
+    
   );
 }
