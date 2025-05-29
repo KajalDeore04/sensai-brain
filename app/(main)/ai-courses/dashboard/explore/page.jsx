@@ -50,9 +50,12 @@ const Explore = () => {
   const GetAllCourses = async () => {
     try {
       const response = await fetch('/api/courses');
+      
       if (!response.ok) throw new Error("Failed to fetch courses");
       const result = await response.json();
       setCourseList(result);
+      console.log(result);
+      
       
       // Initialize filtered courses with pagination
       const initialCourses = result.slice(0, coursesPerPage);

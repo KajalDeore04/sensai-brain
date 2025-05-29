@@ -39,7 +39,7 @@ model Course {
   level        String
   includeVideo Boolean  @default(true)
   courseOutput Json
-  publish      Boolean  @default(false)
+  publish      Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
